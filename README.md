@@ -1,126 +1,204 @@
+<div align="center">
+
 # eppoi
 
-**eppoi** is a Progressive Web App (PWA) designed to transform the tourism experience in the city of **Matelica**. By leveraging Artificial Intelligence, the app provides personalized itinerary recommendations and an intelligent virtual assistant to guide visitors through the city's cultural, gastronomic, and scenic highlights.
+**Discover Matelica like never before: personalized, intelligent, and always with you.**
 
-> *Discover Matelica like never before—personalized, intelligent, and always with you.*
+[![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/9.0)
+[![.NET Aspire](https://img.shields.io/badge/.NET-Aspire-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/en-us/dotnet/aspire/)
+[![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)](#install-the-pwa)
+[![Docker](https://img.shields.io/badge/Docker-required-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+</div>
+
+**eppoi** is a Progressive Web App (PWA) that transforms the tourism experience in the city of **Matelica**. Using Artificial Intelligence, it offers personalized itinerary recommendations and a virtual assistant that guides visitors through the city's cultural, gastronomic and scenic highlights.
+
+> Project developed by the **NAM** group for the *Software Project Management* course (SPM 2025-2026), University of Camerino.
+
+---
 
 ## Table of Contents
 
-* [Introduction](#introduction)
-* [Features](#features)
-* [Installation](#installation)
-* [Usage](#usage)
-* [Technology Stack](#technology-stack)
-* [Contributing](#contriguting)
-* [License](#license)
-* [Authors](#authors)
+- [Why eppoi](#why-eppoi)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Technology Stack](#technology-stack)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
+- [Authors](#authors)
 
-## Introduction
+---
 
-Tourism in Matelica has a rich history, but finding the right experiences can be overwhelming. **eppoi** solves this by acting as a smart travel companion. Whether a user is looking for the best Verdicchio wine tasting, a historical tour of the Palazzo Ottoni, or a hidden nature trail, **eppoi** learns from their preferences to suggest the perfect activity.
+## Why eppoi
 
-This repository contains the source code for the **NAM** group for the academic year 2025-2026.
+Matelica has a rich history, but finding the right experience can be overwhelming. Whether a visitor is looking for a Verdicchio wine tasting, a historical tour of Palazzo Ottoni or a hidden nature trail, **eppoi** learns their preferences and suggests the perfect activity.
 
 ## Features
 
-* **Progressive Web App (PWA):** Installable directly from the browser on both Android and iOS. Works offline and ensures high performance.
-* **AI-Powered Assistant:** A conversational interface that answers questions about Matelica, from opening hours to local legends.
-* **Personalized Recommendations:** An intelligent engine suggesting itineraries and events based on user interests and personality.
-* **Cloud-Native Backend:** Built with .NET Aspire for resilience, observability, and scalability.
+| | Feature | Description |
+|---|---|---|
+| 📱 | **Progressive Web App** | Installable from the browser on Android, iOS and desktop. Fast, with offline support. |
+| 🤖 | **AI Assistant** | Conversational interface that answers questions about Matelica: opening hours, local food, legends and more. |
+| 🧭 | **Personalized Recommendations** | Suggests itineraries and events based on the interests collected during onboarding. |
+| ☁️ | **Cloud-native backend** | Built on .NET Aspire for resilience, observability and scalability. |
 
-## Installation
+## Architecture
 
-This project uses a distributed architecture orchestrated by .NET Aspire. Follow these steps to set up the development environment.
+The solution is a distributed system orchestrated by **.NET Aspire**: the `AppHost` project starts the backend, the frontend and all required containers (databases, vector store) with a single command.
 
-### Prerequisites
+```mermaid
+flowchart TB
+    User(["👤 Visitor"])
 
-* [.NET 9.0 SDK](https://dotnet.microsoft.com/it-it/download/dotnet/9.0) (or higher)
-* [Docker Desktop](https://www.docker.com/) (required for running Aspire containers)
-* [Node.js](https://nodejs.org/en) (for the frontend PWA)
+    subgraph Aspire["⚙️ .NET Aspire AppHost"]
+        direction TB
+        Client["nam.client<br/>React PWA"]
+        Server["nam.Server<br/>ASP.NET Core Web API"]
+        SK["Semantic Kernel<br/>AI orchestration"]
+        SQL[("SQL Server<br/>relational data")]
+        Qdrant[("Qdrant<br/>vector store")]
+        Ingest["DataInjection.*<br/>import pipelines"]
+    end
 
-### Steps
+    LLM["LLM provider"]
 
-1. **Clone the repository:**
-```bash
-git clone https://github.com/SPM-25-26/NAM.git
-cd NAM
-
+    User -->|HTTPS| Client
+    Client -->|REST API| Server
+    Server --> SK
+    Server --> SQL
+    SK -->|similarity search| Qdrant
+    SK -->|prompts / embeddings| LLM
+    Ingest -->|writes| SQL
+    Ingest -->|writes embeddings| Qdrant
 ```
-
-
-2. **Configure Environment Variables:**
-Each subproject in the solution contains a `.env.example` file. You must configure these individually.
-* Navigate to each service directory.
-* Copy `.env.example` to `.env`.
-* Fill in the required keys (API keys, connection strings, etc.) in each `.env` file.
-
-
-```bash
-# Example for one service
-cp nam.Server/.env.example nam.Server/.env
-
-```
-
-
-3. **Trust the Development Certificate:**
-Ensure your local HTTPS development certificates are trusted.
-```bash
-dotnet dev-certs https --trust
-
-```
-
-
-4. **Run the Application:**
-Launch the **AppHost** project. This will orchestrate all frontend, backend, and database containers.
-```bash
-# Run from the root solution folder, targeting the AppHost project
-dotnet run --project nam/nam.AppHost
-
-```
-
-
-5. **Access the Dashboard:**
-Once running, the console will provide a link to the **.NET Aspire Dashboard** (usually `https://localhost:17149`). From there, you can view logs, traces, and access the PWA endpoint.
-
-## Usage
-
-1. **Onboarding:** Open the app and complete the initial preference survey to help the AI understand your interests.
-2. **Ask the AI:** Click on the chat icon to ask questions like "Where can I eat traditional Vincisgrassi?"
-3. **Install PWA:**
-* **Mobile:** Tap "Share" (iOS) or the menu dots (Android) and select "Add to Home Screen."
-* **Desktop:** Click the install icon in the browser address bar.
-
-
 
 ## Technology Stack
 
-* **Orchestration:** [.NET Aspire](https://learn.microsoft.com/en-us/dotnet/aspire/)
-* **Backend:** C# / .NET 9+
-* **Frontend (PWA):** [React / Blazor WASM / Vue]
-* **AI Integration:** [e.g., OpenAI API / Semantic Kernel]
-* **Database:** [e.g., SQL Server / Qdrant] (Managed via Aspire components)
-* **Observability:** OpenTelemetry (Built-in with Aspire)
+| Layer | Technology |
+|---|---|
+| Orchestration | [.NET Aspire](https://learn.microsoft.com/en-us/dotnet/aspire/) |
+| Backend | C# / .NET 9 |
+| Frontend (PWA) | [React](https://react.dev/) |
+| AI integration | [Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/) |
+| Databases | [SQL Server](https://www.microsoft.com/sql-server) (relational) and [Qdrant](https://qdrant.tech/) (vector database) |
+| Observability | OpenTelemetry (built into Aspire) |
+
+## Getting Started
+
+### Prerequisites
+
+- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0) or higher
+- [Docker Desktop](https://www.docker.com/) (running, needed for Aspire containers)
+- [Node.js](https://nodejs.org/) (LTS) for the frontend
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/SPM-25-26/NAM.git
+   cd NAM
+   ```
+
+2. **Configure environment variables**
+
+   Each service has a `.env.example` file. Copy it to `.env` and fill in the required values (API keys, connection strings, etc.).
+
+   ```bash
+   cp nam.Server/.env.example nam.Server/.env
+   # repeat for every project that contains a .env.example
+   ```
+
+   On Windows (PowerShell): `Copy-Item nam.Server/.env.example nam.Server/.env`
+
+   > ⚠️ Never commit `.env` files or real secrets.
+
+3. **Trust the HTTPS development certificate**
+
+   ```bash
+   dotnet dev-certs https --trust
+   ```
+
+4. **Run the application**
+
+   ```bash
+   dotnet run --project nam/nam.AppHost
+   ```
+
+5. **Open the Aspire Dashboard**
+
+   The console prints the dashboard URL (usually `https://localhost:17149`). From there you can inspect logs, traces and metrics, and open the PWA endpoint.
+
+### Troubleshooting
+
+| Problem | Solution |
+|---|---|
+| Containers don't start | Make sure Docker Desktop is running. |
+| HTTPS certificate warning | Re-run `dotnet dev-certs https --trust`. |
+| Service fails at startup | Check that every `.env` file is present and complete. |
+
+## Usage
+
+1. **Onboarding:** complete the initial preference survey so the AI can learn your interests.
+2. **Ask the assistant:** open the chat and ask, for example, *"Where can I eat traditional Vincisgrassi?"*
+3. **Explore recommendations:** browse the suggested itineraries and events.
+
+### Install the PWA
+
+- **Android:** open the browser menu (⋮) → *Add to Home screen*.
+- **iOS:** tap *Share* → *Add to Home Screen*.
+- **Desktop:** click the install icon in the address bar.
+
+## Project Structure
+
+```
+NAM/
+├── nam/                    # Aspire solution projects (AppHost, ServiceDefaults)
+├── nam.Server/             # Backend Web API
+├── nam.client/             # Frontend PWA
+├── Domain/                 # Domain entities and business logic
+├── Infrastructure/         # Data access and external services
+├── DataInjection.Core/     # Shared logic for data import
+├── DataInjection.SQL/      # Import pipeline for the relational database
+├── Datainjection.Qdrant/   # Import pipeline for the Qdrant vector store
+├── ServerTests/            # Backend tests
+└── nam.sln                 # Visual Studio solution
+```
+
+## Testing
+
+```bash
+dotnet test nam.sln
+```
 
 ## Contributing
 
-We welcome contributions to make **eppoi** better for everyone!
+Contributions are welcome!
 
 1. **Fork** the repository.
-2. Create a **Feature Branch** (`git checkout -b feature/AmazingFeature`).
-3. **Commit** your changes (`git commit -m 'Add some AmazingFeature'`).
-4. **Push** to the branch (`git push origin feature/AmazingFeature`).
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m "Add amazing feature"`
+4. Push the branch: `git push origin feature/amazing-feature`
 5. Open a **Pull Request**.
 
-Please ensure your code adheres to the project's coding standards.
+Please follow the project's coding conventions and make sure the tests pass before opening a PR.
 
 ## License
 
-This project is licensed under the **MIT License** - see the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+Distributed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
 ## Authors
 
-* **[Nicol Buratti]** - *Backend* - [@nicol-buratti](https://github.com/nicol-buratti)
-* **[Antonio Marseglia]** - *Backend/Frontend* - [@AntoMars14](https://github.com/AntoMars14)
-* **[Matteo Brachetta]** - *Frontend* - [@BrachettaMatteo](https://github.com/BrachettaMatteo)
+| Name | Role | GitHub |
+|---|---|---|
+| Nicol Buratti | Backend | [@nicol-buratti](https://github.com/nicol-buratti) |
+| Antonio Marseglia | Backend / Frontend | [@AntoMars14](https://github.com/AntoMars14) |
+| Matteo Brachetta | Frontend | [@BrachettaMatteo](https://github.com/BrachettaMatteo) |
 
-**SPM-25-26** - *University Of Camerino*
+**SPM 2025-2026** · University of Camerino
